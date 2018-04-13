@@ -4,7 +4,7 @@ var searchData=
   ['nextframeptr',['NextFramePtr',['../structpmacc_1_1_next_frame_ptr.html',1,'pmacc']]],
   ['ngp',['NGP',['../structpicongpu_1_1particles_1_1shapes_1_1_n_g_p.html',1,'picongpu::particles::shapes::NGP'],['../structpicongpu_1_1particles_1_1shapes_1_1shared___n_g_p_1_1_n_g_p.html',1,'picongpu::particles::shapes::shared_NGP::NGP']]],
   ['nitrogen_5ft',['Nitrogen_t',['../structpicongpu_1_1ionization_1_1atomic_numbers_1_1_nitrogen__t.html',1,'picongpu::ionization::atomicNumbers']]],
-  ['nodeheader',['NodeHeader',['../struct_node_header.html',1,'']]],
+  ['nodeheader',['NodeHeader',['../structpicongpu_1_1_node_header.html',1,'picongpu']]],
   ['none',['None',['../structpicongpu_1_1particles_1_1manipulators_1_1generic_1_1acc_1_1_none.html',1,'picongpu::particles::manipulators::generic::acc::None'],['../structpicongpu_1_1current_interpolation_1_1_none.html',1,'picongpu::currentInterpolation::None'],['../classpicongpu_1_1fields_1_1maxwell_solver_1_1_none.html',1,'picongpu::fields::maxwellSolver::None&lt; T_CurrentInterpolation &gt;']]],
   ['noneds',['NoneDS',['../structpicongpu_1_1current_interpolation_1_1_none_d_s.html',1,'picongpu::currentInterpolation']]],
   ['nonlte',['NonLTE',['../classpicongpu_1_1particles_1_1flylite_1_1_non_l_t_e.html',1,'picongpu::particles::flylite']]],
@@ -17,5 +17,5 @@ var searchData=
   ['numberofexchanges_3c_20dim1_20_3e',['NumberOfExchanges&lt; DIM1 &gt;',['../structpmacc_1_1traits_1_1_number_of_exchanges_3_01_d_i_m1_01_4.html',1,'pmacc::traits']]],
   ['numberofexchanges_3c_20dim2_20_3e',['NumberOfExchanges&lt; DIM2 &gt;',['../structpmacc_1_1traits_1_1_number_of_exchanges_3_01_d_i_m2_01_4.html',1,'pmacc::traits']]],
   ['numberofexchanges_3c_20dim3_20_3e',['NumberOfExchanges&lt; DIM3 &gt;',['../structpmacc_1_1traits_1_1_number_of_exchanges_3_01_d_i_m3_01_4.html',1,'pmacc::traits']]],
-  ['nyquistlowpass',['NyquistLowPass',['../class_nyquist_low_pass.html',1,'']]]
+  ['nyquistlowpass',['NyquistLowPass',['../classpicongpu_1_1_nyquist_low_pass.html',1,'picongpu']]]
 ];

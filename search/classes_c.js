@@ -64,7 +64,7 @@ var searchData=
   ['memcopy_3c_202u_20_3e',['Memcopy&lt; 2u &gt;',['../structpmacc_1_1cuda_wrapper_1_1_memcopy_3_012u_01_4.html',1,'pmacc::cudaWrapper']]],
   ['memcopy_3c_203_20_3e',['Memcopy&lt; 3 &gt;',['../structpmacc_1_1cuda_wrapper_1_1_memcopy_3_013_01_4.html',1,'pmacc::cudaWrapper']]],
   ['memoryinfo',['MemoryInfo',['../classpmacc_1_1nvidia_1_1memory_1_1_memory_info.html',1,'pmacc::nvidia::memory']]],
-  ['messageheader',['MessageHeader',['../struct_message_header.html',1,'']]],
+  ['messageheader',['MessageHeader',['../structpicongpu_1_1_message_header.html',1,'picongpu']]],
   ['midcurrentdensitycomponent',['MidCurrentDensityComponent',['../structpicongpu_1_1particles_1_1particle_to_grid_1_1derived_attributes_1_1_mid_current_density_component.html',1,'picongpu::particles::particleToGrid::derivedAttributes']]],
   ['min',['min',['../structpmacc_1_1math_1_1_c_t_1_1min.html',1,'pmacc::math::CT::min&lt; Lhs, Rhs &gt;'],['../structpmacc_1_1math_1_1math__functor_1_1_min.html',1,'pmacc::math::math_functor::Min'],['../structpmacc_1_1nvidia_1_1functors_1_1_min.html',1,'pmacc::nvidia::functors::Min'],['../structpmacc_1_1algorithms_1_1math_1_1_min.html',1,'pmacc::algorithms::math::Min&lt; T1, T2 &gt;'],['../structpmacc_1_1traits_1_1limits_1_1_min.html',1,'pmacc::traits::limits::Min&lt; T_Type &gt;']]],
   ['min_3c_20_3a_3apmacc_3a_3amath_3a_3avector_3c_20type_2c_20dim_20_3e_2c_20_3a_3apmacc_3a_3amath_3a_3avector_3c_20type_2c_20dim_20_3e_20_3e',['Min&lt; ::pmacc::math::Vector&lt; Type, dim &gt;, ::pmacc::math::Vector&lt; Type, dim &gt; &gt;',['../structpmacc_1_1algorithms_1_1math_1_1_min_3_01_1_1pmacc_1_1math_1_1_vector_3_01_type_00_01dim_0107226367686d703eba89d5a0b36ad862.html',1,'pmacc::algorithms::math']]],

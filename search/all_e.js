@@ -2,7 +2,7 @@ var searchData=
 [
   ['n_5fobserver',['N_observer',['../radiation_8param.html#ae0152f493170ff9c70d3156286a817f2',1,'picongpu::parameters']]],
   ['n_5fomega',['N_omega',['../radiation_8param.html#ac0667edbdf03ef3fb88e62fbf1306e97',1,'picongpu::rad_linear_frequencies::N_omega()'],['../radiation_8param.html#a157188bfbff0e2795ff5f4294a7ed4a0',1,'picongpu::rad_log_frequencies::N_omega()'],['../radiation_8param.html#a9dae6937bbe48a45fa34961b779dd7c0',1,'picongpu::rad_frequencies_from_list::N_omega()']]],
-  ['name',['name',['../struct_color_header_1_1channel.html#ae14e65a598859ccace6946513b89e1eb',1,'ColorHeader::channel']]],
+  ['name',['name',['../structpicongpu_1_1_color_header_1_1channel.html#a656d0f201d07c53f9c3a30f18d54d069',1,'picongpu::ColorHeader::channel']]],
   ['native_5fseq',['Native_Seq',['../isaac_8param.html#ae0edc2ec49cdc7914217bd2e3cc37a07',1,'picongpu::isaacP']]],
   ['nativedata',['NativeData',['../structpmacc_1_1math_1_1_native_data.html',1,'pmacc::math']]],
   ['next',['next',['../classpmacc_1_1_stride_mapping_3_01area_type_00_01stride_00_01base_class_3_01_d_i_m_00_01_super_cell_size___01_4_01_4.html#a722c1169cf8dbc842b554e24d320d6c5',1,'pmacc::StrideMapping&lt; areaType, stride, baseClass&lt; DIM, SuperCellSize_ &gt; &gt;']]],
@@ -10,7 +10,7 @@ var searchData=
   ['nextid',['nextId',['../structpmacc_1_1_id_provider_1_1_state.html#a91cc8fe229d7bc55fd7125d4aadaef7f',1,'pmacc::IdProvider::State']]],
   ['ngp',['NGP',['../structpicongpu_1_1particles_1_1shapes_1_1_n_g_p.html',1,'picongpu::particles::shapes::NGP'],['../structpicongpu_1_1particles_1_1shapes_1_1shared___n_g_p_1_1_n_g_p.html',1,'picongpu::particles::shapes::shared_NGP::NGP']]],
   ['nitrogen_5ft',['Nitrogen_t',['../structpicongpu_1_1ionization_1_1atomic_numbers_1_1_nitrogen__t.html',1,'picongpu::ionization::atomicNumbers']]],
-  ['nodeheader',['NodeHeader',['../struct_node_header.html',1,'']]],
+  ['nodeheader',['NodeHeader',['../structpicongpu_1_1_node_header.html',1,'picongpu']]],
   ['none',['None',['../structpicongpu_1_1particles_1_1manipulators_1_1generic_1_1acc_1_1_none.html',1,'picongpu::particles::manipulators::generic::acc::None'],['../structpicongpu_1_1current_interpolation_1_1_none.html',1,'picongpu::currentInterpolation::None'],['../classpicongpu_1_1fields_1_1maxwell_solver_1_1_none.html',1,'picongpu::fields::maxwellSolver::None&lt; T_CurrentInterpolation &gt;']]],
   ['noneds',['NoneDS',['../structpicongpu_1_1current_interpolation_1_1_none_d_s.html',1,'picongpu::currentInterpolation']]],
   ['nonlte',['NonLTE',['../classpicongpu_1_1particles_1_1flylite_1_1_non_l_t_e.html',1,'picongpu::particles::flylite']]],
@@ -36,5 +36,5 @@ var searchData=
   ['numparticlesperdimension',['numParticlesPerDimension',['../structpicongpu_1_1particles_1_1start_position_1_1_quiet_param.html#ac86ef6abd369da03b431d2f30e54c568',1,'picongpu::particles::startPosition::QuietParam']]],
   ['numworkers',['numWorkers',['../classpmacc_1_1mappings_1_1threads_1_1_worker_cfg.html#a356aeb259d3ff1e9558caaf62cb0572c',1,'pmacc::mappings::threads::WorkerCfg']]],
   ['nyquistfactor',['NyquistFactor',['../namespacepicongpu_1_1radiation_nyquist.html#a08e96bfc7598f5d308495b9abe3dad2f',1,'picongpu::radiationNyquist']]],
-  ['nyquistlowpass',['NyquistLowPass',['../class_nyquist_low_pass.html',1,'NyquistLowPass'],['../class_nyquist_low_pass.html#a24ef2355791a5fa26bf91ae0e6553ea9',1,'NyquistLowPass::NyquistLowPass(const vector_64 &amp;n, const Particle &amp;particle)'],['../class_nyquist_low_pass.html#aa8b138e2e04e4301ddd460a2509ae1da',1,'NyquistLowPass::NyquistLowPass(void)']]]
+  ['nyquistlowpass',['NyquistLowPass',['../classpicongpu_1_1_nyquist_low_pass.html',1,'picongpu::NyquistLowPass'],['../classpicongpu_1_1_nyquist_low_pass.html#a4198af31ff7d93dcd5e396ba5c17b6d6',1,'picongpu::NyquistLowPass::NyquistLowPass(const vector_64 &amp;n, const Particle &amp;particle)'],['../classpicongpu_1_1_nyquist_low_pass.html#a50de671800c492e709b29ed082a2f710',1,'picongpu::NyquistLowPass::NyquistLowPass(void)']]]
 ];

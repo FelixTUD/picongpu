@@ -38,7 +38,7 @@ var searchData=
   ['kernelradiationparticles_3c_20t_5fnumworkers_2c_20false_20_3e',['KernelRadiationParticles&lt; T_numWorkers, false &gt;',['../structpicongpu_1_1_kernel_radiation_particles_3_01_t__num_workers_00_01false_01_4.html',1,'picongpu']]],
   ['kernelsetnextid',['KernelSetNextId',['../structpmacc_1_1id_detail_1_1_kernel_set_next_id.html',1,'pmacc::idDetail']]],
   ['kernelsetvalue',['KernelSetValue',['../structpmacc_1_1_kernel_set_value.html',1,'pmacc']]],
-  ['kernelsetvalueondevicememory',['KernelSetValueOnDeviceMemory',['../struct_kernel_set_value_on_device_memory.html',1,'']]],
+  ['kernelsetvalueondevicememory',['KernelSetValueOnDeviceMemory',['../structpmacc_1_1_kernel_set_value_on_device_memory.html',1,'pmacc']]],
   ['kernelshiftparticles',['KernelShiftParticles',['../structpmacc_1_1_kernel_shift_particles.html',1,'pmacc']]],
   ['kernelstarter',['KernelStarter',['../structpmacc_1_1exec_1_1_kernel_starter.html',1,'pmacc::exec::KernelStarter&lt; T_Kernel, T_VectorGrid, T_VectorBlock &gt;'],['../structpmacc_1_1exec_1_1_kernel_starter.html#a764d226ee0efa3b3510b824b0545d888',1,'pmacc::exec::KernelStarter::KernelStarter()']]],
   ['kernelsumcurrents',['KernelSumCurrents',['../structpicongpu_1_1_kernel_sum_currents.html',1,'picongpu']]],
