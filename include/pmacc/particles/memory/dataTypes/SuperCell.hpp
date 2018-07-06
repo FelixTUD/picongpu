@@ -28,75 +28,87 @@
 namespace pmacc
 {
 
-template <class TYPE>
-class SuperCell
-{
-public:
-
-    HDINLINE SuperCell() :
-        firstFramePtr(nullptr),
-        lastFramePtr(nullptr),
-        numParticles(0),
-        mustShiftVal(false)
+    template< class T_FrameType >
+    class SuperCell
     {
-    }
+    public:
 
-    HDINLINE TYPE* FirstFramePtr()
-    {
-        return firstFramePtr;
-    }
+        HDINLINE SuperCell() :
+            firstFramePtr( nullptr ),
+            lastFramePtr( nullptr ),
+            numParticles( 0 ),
+            mustShiftVal( false )
+        {
+        }
 
-    HDINLINE TYPE* LastFramePtr()
-    {
-        return lastFramePtr;
-    }
+        HDINLINE T_FrameType * FirstFramePtr()
+        {
+            return firstFramePtr;
+        }
 
-    HDINLINE const TYPE* FirstFramePtr() const
-    {
-        return firstFramePtr;
-    }
+        HDINLINE T_FrameType * LastFramePtr()
+        {
+            return lastFramePtr;
+        }
 
-    HDINLINE const TYPE* LastFramePtr() const
-    {
-        return lastFramePtr;
-    }
+        HDINLINE T_FrameType const * FirstFramePtr() const
+        {
+            return firstFramePtr;
+        }
 
-    HDINLINE bool mustShift()
-    {
-        return mustShiftVal;
-    }
+        HDINLINE T_FrameType const*  LastFramePtr() const
+        {
+            return lastFramePtr;
+        }
 
-    HDINLINE void setMustShift(bool value)
-    {
-        mustShiftVal = value;
-    }
+        HDINLINE bool mustShift() const
+        {
+            return mustShiftVal;
+        }
 
-    HDINLINE uint32_t getSizeLastFrame()
-    {
-        constexpr uint32_t frameSize = math::CT::volume<
-            typename TYPE::SuperCellSize
-        >::type::value;
-        uint32_t numParLastFrame = numParticles % frameSize;
-        // numParLastFrame == 0 means the last frame is fully filled
-        return numParLastFrame == 0 ? frameSize : numParLastFrame;
-    }
+        HDINLINE void setMustShift( bool const value )
+        {
+            mustShiftVal = value;
+        }
 
-    HDINLINE uint32_t getNumParticles()
-    {
-        return numParticles;
-    }
+        HDINLINE uint32_t getSizeLastFrame() const
+        {
+            constexpr uint32_t frameSize = math::CT::volume<
+                typename T_FrameType::SuperCellSize
+            >::type::value;
+            uint32_t numParLastFrame = numParticles % frameSize;
+            // numParLastFrame == 0 means the last frame is fully filled
+            return numParLastFrame == 0 ? frameSize : numParLastFrame;
+        }
 
-    HDINLINE void setNumParticles(uint32_t size)
-    {
-        numParticles = size;
-    }
+        HDINLINE uint32_t getNumParticles() const
+        {
+            return numParticles;
+        }
 
-public:
-    PMACC_ALIGN(firstFramePtr, TYPE*);
-    PMACC_ALIGN(lastFramePtr, TYPE*);
-private:
-    PMACC_ALIGN(numParticles, uint32_t);
-    PMACC_ALIGN(mustShiftVal, bool);
-};
+        HDINLINE void setNumParticles( uint32_t const size )
+        {
+            numParticles = size;
+        }
+
+    public:
+        PMACC_ALIGN(
+            firstFramePtr,
+            T_FrameType*
+        );
+        PMACC_ALIGN(
+            lastFramePtr,
+            T_FrameType*
+        );
+    private:
+        PMACC_ALIGN(
+            numParticles,
+            uint32_t
+        );
+        PMACC_ALIGN(
+            mustShiftVal,
+            bool
+        );
+    };
 
 } //namespace pmacc
