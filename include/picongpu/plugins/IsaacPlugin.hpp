@@ -212,6 +212,7 @@ public:
     typedef boost::mpl::int_< simDim > SimDim;
     static const size_t textureDim = 1024;
     using SourceList = bmpl::transform<boost::fusion::result_of::as_list< Fields_Seq >::type,Transformoperator<bmpl::_1>>::type;
+    using ParticleList = boost::fusion::list<>;
     using VisualizationType = IsaacVisualization
     <
         cupla::AccHost,
@@ -219,6 +220,7 @@ public:
         cupla::AccStream,
         cupla::KernelDim,
         SimDim,
+	ParticleList,
         SourceList,
         DataSpace< simDim >,
         textureDim,
@@ -354,6 +356,7 @@ private:
     int rank;
     int numProc;
     bool movingWindow;
+    ParticleList particleSources;
     SourceList sources;
     /** render interval within the notify period
      *
@@ -401,6 +404,7 @@ private:
                 subGrid.getGlobalDomain().size,
                 subGrid.getLocalDomain().size,
                 subGrid.getLocalDomain().offset,
+		particleSources,   
                 sources,
                 cellSizeFactor
             );
