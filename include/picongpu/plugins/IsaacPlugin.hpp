@@ -180,6 +180,68 @@ class TFieldSource< FieldTmpOperation< FrameSolver, ParticleType > >
         }
 };
 
+class ParticleIterator1
+{
+public:
+  size_t size;
+  
+  ISAAC_NO_HOST_DEVICE_WARNING
+  ISAAC_HOST_DEVICE_INLINE ParticleIterator1(size_t size) : 
+      size(size)
+      {}
+  
+  ISAAC_HOST_DEVICE_INLINE void next()
+  {
+
+  }
+  
+    ISAAC_HOST_DEVICE_INLINE isaac_float3 getPosition() const
+  {
+    return {96, 512, 6};
+  }
+  
+    ISAAC_HOST_DEVICE_INLINE isaac_float3 getAttribute() const
+  {
+    return {0.5, 0, 0};
+  }
+  
+      ISAAC_HOST_DEVICE_INLINE isaac_float getRadius() const
+  {
+    return 3.0f;
+  }
+  
+  
+private:
+  
+};
+
+//////////////////////
+// Example Source 2 //
+//////////////////////
+ISAAC_NO_HOST_DEVICE_WARNING
+class ParticleSource1
+{
+	public:
+
+		ISAAC_NO_HOST_DEVICE_WARNING
+        ParticleSource1 ()
+		{}
+
+		ISAAC_HOST_INLINE static std::string getName()
+		{
+			return std::string("Particle Source 1");
+		}
+
+		size_t size = 1;
+
+		ISAAC_NO_HOST_DEVICE_WARNING
+		ISAAC_HOST_DEVICE_INLINE ParticleIterator1 getIterator(const isaac_int3& local_grid_coord) const
+		{
+			
+			return ParticleIterator1(size);
+		}
+};
+
 template< typename T >
 struct Transformoperator
 {
@@ -207,7 +269,7 @@ public:
     typedef boost::mpl::int_< simDim > SimDim;
     static const size_t textureDim = 1024;
     using SourceList = bmpl::transform<boost::fusion::result_of::as_list< Fields_Seq >::type,Transformoperator<bmpl::_1>>::type;
-    using ParticleList = boost::fusion::list<>;
+    using ParticleList = boost::fusion::list<ParticleSource1>;
     using VisualizationType = IsaacVisualization
     <
         cupla::AccHost,
@@ -351,6 +413,7 @@ private:
     int rank;
     int numProc;
     bool movingWindow;
+    ParticleSource1 pSource1;
     ParticleList particleSources;
     SourceList sources;
     /** render interval within the notify period
@@ -386,6 +449,7 @@ private:
             };
 
             isaac_for_each_params( sources, SourceInitIterator(), cellDescription, movingWindow );
+	    particleSources = ParticleList(pSource1);
 
             visualization = new VisualizationType (
                 cupla::manager::Device< cupla::AccHost >::get().current( ),
@@ -401,8 +465,15 @@ private:
                 subGrid.getLocalDomain().offset,
 		particleSources,   
                 sources,
-                cellSizeFactor
+                cellSizeFactor,
+                SuperCellSize::toRT()
             );
+	    
+	    std::cout << "GlobalDomain: " << subGrid.getGlobalDomain().size[0] << "; " << subGrid.getGlobalDomain().size[1] << "; " << subGrid.getGlobalDomain().size[2] <<  std::endl;
+	    std::cout << "LocalDomain: " << subGrid.getLocalDomain().size[0] << "; " << subGrid.getLocalDomain().size[1] << "; " << subGrid.getLocalDomain().size[2] <<  std::endl;
+	    std::cout << "Offset: " << subGrid.getLocalDomain().offset[0] << "; " << subGrid.getLocalDomain().offset[1] << "; " << subGrid.getLocalDomain().offset[2] <<  std::endl;
+	    std::cout << "CellSizeFactor: " << cellSizeFactor[0] << "; " << cellSizeFactor[1] << "; " << cellSizeFactor[2] <<  std::endl;
+	    std::cout << "SuperCellSize: " << SuperCellSize::toRT()[0] << "; " << SuperCellSize::toRT()[1] << "; " << SuperCellSize::toRT()[2] <<  std::endl;
             visualization->setJpegQuality(jpeg_quality);
             //Defining the later periodicly sent meta data
             if (rank == 0)
@@ -427,7 +498,7 @@ private:
                 particle_count = localNrOfCells * particles::TYPICAL_PARTICLES_PER_CELL * (bmpl::size<VectorAllSpecies>::type::value) * numProc;
                 last_notify = visualization->getTicksUs();
                 if (rank == 0)
-                    log<picLog::INPUT_OUTPUT > ("ISAAC Init succeded");
+                    log<picLog::INPUT_OUTPUT > ("ISAAC + Particle Init succeded");
             }
         }
         Environment<>::get().PluginConnector().setNotificationPeriod(this, notifyPeriod);
