@@ -192,7 +192,8 @@ public:
       size(size),
       pb(pb),
       frame(firstFrame),
-      frameSize(frameSize)
+      frameSize(frameSize),
+      i(0)
       {
 	
       }
@@ -210,7 +211,15 @@ public:
     ISAAC_HOST_DEVICE_INLINE isaac_float3 getPosition() const
   {
     auto const particle = frame[ i ];
-    float3_X const pos = particle[ position_ ];
+    
+    // storage number in the actual frame
+    const auto frameCellNr = particle[localCellIdx_];
+
+    // offset in the actual superCell = cell offset in the supercell
+    const DataSpace<simDim> frameCellOffset(DataSpaceOperations<simDim>::template map<MappingDesc::SuperCellSize > (frameCellNr));
+    
+    float3_X const pos = (particle[ position_ ] + float3_X(frameCellOffset)) / float3_X(MappingDesc::SuperCellSize::toRT());
+    
     return {pos[0], pos[1], pos[2]};
   }
   
@@ -230,20 +239,19 @@ public:
   {
     auto const particle = frame[ i ];
     float_X const weight = particle[ weighting_ ];
-    return weight * 0.05f;
+    return weight * 0.0005f;
   }
   
   
 private:
   ParticlesBoxType pb;
   FramePtr frame;
-  int i = 0;
+  int i;
   int frameSize;
 };
 
-//////////////////////
-// Example Source 2 //
-//////////////////////
+
+
 ISAAC_NO_HOST_DEVICE_WARNING
 template< typename ParticlesType >
 class ParticleSource1
