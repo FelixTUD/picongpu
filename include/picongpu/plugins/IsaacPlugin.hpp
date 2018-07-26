@@ -180,7 +180,7 @@ class TFieldSource< FieldTmpOperation< FrameSolver, ParticleType > >
         }
 };
 
-template<typename ParticlesBoxType>
+template<size_t feature_dim, typename ParticlesBoxType>
 class ParticleIterator1
 {
 public:
@@ -218,28 +218,34 @@ public:
     // offset in the actual superCell = cell offset in the supercell
     const DataSpace<simDim> frameCellOffset(DataSpaceOperations<simDim>::template map<MappingDesc::SuperCellSize > (frameCellNr));
     
-    float3_X const pos = (particle[ position_ ] + float3_X(frameCellOffset)) / float3_X(MappingDesc::SuperCellSize::toRT());
+    float3_X const absoluteOffset(particle[ position_ ] + float3_X(frameCellOffset));
+    float3_X const pos(
+      absoluteOffset.x() * (1._X / float_X(MappingDesc::SuperCellSize::x::value)),
+      absoluteOffset.y() * (1._X / float_X(MappingDesc::SuperCellSize::y::value)),
+      absoluteOffset.z() * (1._X / float_X(MappingDesc::SuperCellSize::z::value))
+      
+    );
     
     return {pos[0], pos[1], pos[2]};
   }
   
-    ISAAC_HOST_DEVICE_INLINE isaac_float3 getAttribute() const
+    ISAAC_HOST_DEVICE_INLINE isaac_float_dim<feature_dim> getAttribute() const
   {
     
     auto const particle = frame[ i ];
     float3_X const mom = particle[ momentum_ ];
     //return {ISAAC_MAX(ISAAC_MIN((mom[0] + 1) * 0.5f, 1.0f), 0.0f), ISAAC_MAX(ISAAC_MIN((mom[1] + 1) * 0.5f, 1.0f), 0.0f), ISAAC_MAX(ISAAC_MIN((mom[2] + 1) * 0.5f, 1.0f), 0.0f)};
-    //return {mom[0] * mom[0] + mom[1] * mom[1] + mom[2] * mom[2] * 1000.0f, 0, 0};
+    return {mom[0], mom[1], mom[2]};
     //return {mom[0] * 4, mom[1] * mom[1] * 10, -mom[0] * 4};
-    //return {size / 512.0f, size / 512.0f, size / 512.0f};
-    return {0.3f, 0.7f, 0.0f};
+    //return {0.3f, 0.7f, 0.0f};
   }
   
       ISAAC_HOST_DEVICE_INLINE isaac_float getRadius() const
   {
-    auto const particle = frame[ i ];
-    float_X const weight = particle[ weighting_ ];
-    return weight * 0.0005f;
+//     auto const particle = frame[ i ];
+//     float_X const weight = particle[ weighting_ ];
+//     return weight * 0.0005f;
+    return 0.2f;
   }
   
   
@@ -286,7 +292,7 @@ class ParticleSource1
 		}
 		
 		ISAAC_NO_HOST_DEVICE_WARNING
-		ISAAC_HOST_DEVICE_INLINE ParticleIterator1<ParticlesBoxType> getIterator(const isaac_uint3& local_grid_coord) const
+		ISAAC_HOST_DEVICE_INLINE ParticleIterator1<feature_dim, ParticlesBoxType> getIterator(const isaac_uint3& local_grid_coord) const
 		{
 			constexpr uint32_t frameSize = pmacc::math::CT::volume< typename FrameType::SuperCellSize >::type::value;
 			uint3 local_grid = {local_grid_coord.x + GuardSize::toRT()[0], local_grid_coord.y + GuardSize::toRT()[1], local_grid_coord.z + GuardSize::toRT()[2]};
@@ -294,17 +300,7 @@ class ParticleSource1
 			const auto & superCell = pb[0].getSuperCell(superCellIdx);
 			size_t size = superCell.getNumParticles();
 			FramePtr currentFrame = pb[0].getFirstFrame( superCellIdx );
-// 			FramePtr frame = pb[0].getLastFrame( superCellIdx );
-// 			FramePtr currentFrame;
-// 			while( frame.isValid())
-// 			{
-// 			  currentFrame = frame;
-// 			  frame = pb[0].getPreviousFrame(frame);
-// 			}
-// 			size = ISAAC_MIN(int(size), frameSize);
-
-			return ParticleIterator1<ParticlesBoxType>(size, pb[0], currentFrame, frameSize);
-			//return ParticleIterator1<ParticlesBoxType>(0, nullptr, nullptr);
+			return ParticleIterator1<feature_dim, ParticlesBoxType>(size, pb[0], currentFrame, frameSize);
 		}
 };
 
