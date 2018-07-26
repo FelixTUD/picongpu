@@ -237,6 +237,14 @@ struct KernelFillGapsLastFrame
                         superCell.getNumParticles() + counterParticles
                     );
                 }
+                else
+		{
+                    getPreviousFrameAndRemoveLastFrame(
+                        lastFrame,
+                        pb,
+                        superCellIdx
+                    );
+		}
                 }
 
             }

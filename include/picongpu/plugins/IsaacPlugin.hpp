@@ -180,65 +180,123 @@ class TFieldSource< FieldTmpOperation< FrameSolver, ParticleType > >
         }
 };
 
+template<typename ParticlesBoxType>
 class ParticleIterator1
 {
 public:
+  using FramePtr = typename ParticlesBoxType::FramePtr;
   size_t size;
   
   ISAAC_NO_HOST_DEVICE_WARNING
-  ISAAC_HOST_DEVICE_INLINE ParticleIterator1(size_t size) : 
-      size(size)
-      {}
+  ISAAC_HOST_DEVICE_INLINE ParticleIterator1(size_t size, ParticlesBoxType pb, FramePtr firstFrame, int frameSize) : 
+      size(size),
+      pb(pb),
+      frame(firstFrame),
+      frameSize(frameSize)
+      {
+	
+      }
   
   ISAAC_HOST_DEVICE_INLINE void next()
   {
-
+    i++;
+    if(i >= frameSize)
+    {
+      frame = pb.getNextFrame(frame);
+      i = 0;
+    }
   }
   
     ISAAC_HOST_DEVICE_INLINE isaac_float3 getPosition() const
   {
-    return {96, 512, 6};
+    auto const particle = frame[ i ];
+    float3_X const pos = particle[ position_ ];
+    return {pos[0], pos[1], pos[2]};
   }
   
     ISAAC_HOST_DEVICE_INLINE isaac_float3 getAttribute() const
   {
-    return {0.5, 0, 0};
+    
+    auto const particle = frame[ i ];
+    float3_X const mom = particle[ momentum_ ];
+    //return {ISAAC_MAX(ISAAC_MIN((mom[0] + 1) * 0.5f, 1.0f), 0.0f), ISAAC_MAX(ISAAC_MIN((mom[1] + 1) * 0.5f, 1.0f), 0.0f), ISAAC_MAX(ISAAC_MIN((mom[2] + 1) * 0.5f, 1.0f), 0.0f)};
+    //return {mom[0] * mom[0] + mom[1] * mom[1] + mom[2] * mom[2] * 1000.0f, 0, 0};
+    //return {mom[0] * 4, mom[1] * mom[1] * 10, -mom[0] * 4};
+    //return {size / 512.0f, size / 512.0f, size / 512.0f};
+    return {0.3f, 0.7f, 0.0f};
   }
   
       ISAAC_HOST_DEVICE_INLINE isaac_float getRadius() const
   {
-    return 3.0f;
+    auto const particle = frame[ i ];
+    float_X const weight = particle[ weighting_ ];
+    return weight * 0.05f;
   }
   
   
 private:
-  
+  ParticlesBoxType pb;
+  FramePtr frame;
+  int i = 0;
+  int frameSize;
 };
 
 //////////////////////
 // Example Source 2 //
 //////////////////////
 ISAAC_NO_HOST_DEVICE_WARNING
+template< typename ParticlesType >
 class ParticleSource1
 {
-	public:
 
+	 using ParticlesBoxType = typename ParticlesType::ParticlesBoxType;
+	 using FramePtr = typename ParticlesBoxType::FramePtr;
+	 using FrameType = typename ParticlesBoxType::FrameType;
+// 	 using SuperCellSize = typename MappingDesc::SuperCellSize;
+	 
+	public:
+		static const size_t feature_dim = 3;
 		ISAAC_NO_HOST_DEVICE_WARNING
-        ParticleSource1 ()
+		ParticleSource1 ()
 		{}
 
 		ISAAC_HOST_INLINE static std::string getName()
 		{
-			return std::string("Particle Source 1");
+			return ParticlesType::FrameType::getName();
 		}
 
-		size_t size = 1;
-
-		ISAAC_NO_HOST_DEVICE_WARNING
-		ISAAC_HOST_DEVICE_INLINE ParticleIterator1 getIterator(const isaac_int3& local_grid_coord) const
+		pmacc::memory::Array<ParticlesBoxType,1> pb;
+		
+		
+		void update()
 		{
+			DataConnector &dc = Environment<>::get().DataConnector();
+			//constexpr uint32_t maxParticlesPerFrame = pmacc::math::CT::volume< SuperCellSize >::type::value;
+			auto particles = dc.get< ParticlesType >( ParticlesType::FrameType::getName(), true );
+			pb[0] = particles->getDeviceParticlesBox();
 			
-			return ParticleIterator1(size);
+		}
+		
+		ISAAC_NO_HOST_DEVICE_WARNING
+		ISAAC_HOST_DEVICE_INLINE ParticleIterator1<ParticlesBoxType> getIterator(const isaac_uint3& local_grid_coord) const
+		{
+			constexpr uint32_t frameSize = pmacc::math::CT::volume< typename FrameType::SuperCellSize >::type::value;
+			uint3 local_grid = {local_grid_coord.x + GuardSize::toRT()[0], local_grid_coord.y + GuardSize::toRT()[1], local_grid_coord.z + GuardSize::toRT()[2]};
+			DataSpace< simDim > const superCellIdx = DataSpace< simDim >( local_grid );
+			const auto & superCell = pb[0].getSuperCell(superCellIdx);
+			size_t size = superCell.getNumParticles();
+			FramePtr currentFrame = pb[0].getFirstFrame( superCellIdx );
+// 			FramePtr frame = pb[0].getLastFrame( superCellIdx );
+// 			FramePtr currentFrame;
+// 			while( frame.isValid())
+// 			{
+// 			  currentFrame = frame;
+// 			  frame = pb[0].getPreviousFrame(frame);
+// 			}
+// 			size = ISAAC_MIN(int(size), frameSize);
+
+			return ParticleIterator1<ParticlesBoxType>(size, pb[0], currentFrame, frameSize);
+			//return ParticleIterator1<ParticlesBoxType>(0, nullptr, nullptr);
 		}
 };
 
@@ -246,6 +304,20 @@ template< typename T >
 struct Transformoperator
 {
     typedef TFieldSource< T > type;
+};
+template< typename T >
+struct ParticleTransformoperator
+{
+    typedef ParticleSource1< T > type;
+};
+
+struct ParticleSourceNameIterator
+{
+    template<typename TSource>
+    ISAAC_HOST_INLINE  void operator()( const int I,const TSource& s) const
+    {
+	std::cout << "Particle Source: " << I << ", Name: " << s.getName() << std::endl;
+    }
 };
 
 struct SourceInitIterator
@@ -269,7 +341,8 @@ public:
     typedef boost::mpl::int_< simDim > SimDim;
     static const size_t textureDim = 1024;
     using SourceList = bmpl::transform<boost::fusion::result_of::as_list< Fields_Seq >::type,Transformoperator<bmpl::_1>>::type;
-    using ParticleList = boost::fusion::list<ParticleSource1>;
+    //using ParticleList = boost::fusion::list<ParticleSource1>;
+    using ParticleList = bmpl::transform<boost::fusion::result_of::as_list< VectorAllSpecies >::type,ParticleTransformoperator<bmpl::_1>>::type;
     using VisualizationType = IsaacVisualization
     <
         cupla::AccHost,
@@ -413,7 +486,7 @@ private:
     int rank;
     int numProc;
     bool movingWindow;
-    ParticleSource1 pSource1;
+    //ParticleSource1 pSource1;
     ParticleList particleSources;
     SourceList sources;
     /** render interval within the notify period
@@ -449,8 +522,10 @@ private:
             };
 
             isaac_for_each_params( sources, SourceInitIterator(), cellDescription, movingWindow );
-	    particleSources = ParticleList(pSource1);
-
+	    //particleSources = ParticleList(pSource1);
+	    isaac_for_each_params( particleSources, ParticleSourceNameIterator());
+	    
+	    
             visualization = new VisualizationType (
                 cupla::manager::Device< cupla::AccHost >::get().current( ),
                 cupla::manager::Device< cupla::AccDev >::get().current( ),
@@ -462,11 +537,11 @@ private:
                 framebuffer_size,
                 subGrid.getGlobalDomain().size,
                 subGrid.getLocalDomain().size,
+		subGrid.getLocalDomain().size / SuperCellSize::toRT(),
                 subGrid.getLocalDomain().offset,
 		particleSources,   
                 sources,
-                cellSizeFactor,
-                SuperCellSize::toRT()
+                cellSizeFactor
             );
 	    
 	    std::cout << "GlobalDomain: " << subGrid.getGlobalDomain().size[0] << "; " << subGrid.getGlobalDomain().size[1] << "; " << subGrid.getGlobalDomain().size[2] <<  std::endl;
