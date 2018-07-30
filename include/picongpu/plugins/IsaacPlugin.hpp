@@ -270,32 +270,53 @@ class ParticleSource1
 	 
 	public:
 		static const size_t feature_dim = 3;
+		bool movingWindow;
+		DataSpace< simDim > guarding;
 		ISAAC_NO_HOST_DEVICE_WARNING
 		ParticleSource1 ()
 		{}
 
 		ISAAC_HOST_INLINE static std::string getName()
 		{
-			return ParticlesType::FrameType::getName();
+			return ParticlesType::FrameType::getName() + std::string(" particle");
 		}
 
 		pmacc::memory::Array<ParticlesBoxType,1> pb;
 		
-		
-		void update()
+		void init(bool movingWindow)
 		{
+		    this->movingWindow = movingWindow;
+		}
+		
+		void update(bool enabled, void* pointer)
+		{
+		    if (enabled)
+		    {
+			uint32_t* currentStep = (uint32_t*)pointer;
 			DataConnector &dc = Environment<>::get().DataConnector();
 			//constexpr uint32_t maxParticlesPerFrame = pmacc::math::CT::volume< SuperCellSize >::type::value;
 			auto particles = dc.get< ParticlesType >( ParticlesType::FrameType::getName(), true );
 			pb[0] = particles->getDeviceParticlesBox();
 			
+			const SubGrid<simDim>& subGrid = Environment< simDim >::get().SubGrid();
+			guarding = GuardSize::toRT();
+			if (movingWindow)
+			{
+			    GridController<simDim> &gc = Environment<simDim>::get().GridController();
+			    if (gc.getPosition()[1] == 0) //first gpu
+			    {
+				Window window(MovingWindow::getInstance().getWindow( *currentStep ));
+				guarding += (subGrid.getLocalDomain().size - window.localDimensions.size) / MappingDesc::SuperCellSize::toRT();
+			    }
+			}
+		    }
 		}
 		
 		ISAAC_NO_HOST_DEVICE_WARNING
 		ISAAC_HOST_DEVICE_INLINE ParticleIterator1<feature_dim, ParticlesBoxType> getIterator(const isaac_uint3& local_grid_coord) const
 		{
 			constexpr uint32_t frameSize = pmacc::math::CT::volume< typename FrameType::SuperCellSize >::type::value;
-			uint3 local_grid = {local_grid_coord.x + GuardSize::toRT()[0], local_grid_coord.y + GuardSize::toRT()[1], local_grid_coord.z + GuardSize::toRT()[2]};
+			uint3 local_grid = {local_grid_coord.x + guarding[0], local_grid_coord.y + guarding[1], local_grid_coord.z + guarding[2]};
 			DataSpace< simDim > const superCellIdx = DataSpace< simDim >( local_grid );
 			const auto & superCell = pb[0].getSuperCell(superCellIdx);
 			size_t size = superCell.getNumParticles();
@@ -335,6 +356,19 @@ struct SourceInitIterator
     void operator()( const int I, TSource& s, TCellDescription& c, TMovingWindow& w) const
     {
         s.init(c,w);
+    }
+};
+
+struct ParticleSourceInitIterator
+{
+    template
+    <
+        typename TParticleSource,
+        typename TMovingWindow
+    >
+    void operator()( const int I, TParticleSource& s, TMovingWindow& w) const
+    {
+        s.init(w);
     }
 };
 
@@ -526,6 +560,7 @@ private:
             };
 
             isaac_for_each_params( sources, SourceInitIterator(), cellDescription, movingWindow );
+	    isaac_for_each_params( particleSources, ParticleSourceInitIterator(), movingWindow);
 	    //particleSources = ParticleList(pSource1);
 	    isaac_for_each_params( particleSources, ParticleSourceNameIterator());
 	    
