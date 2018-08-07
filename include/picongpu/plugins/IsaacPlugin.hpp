@@ -306,7 +306,7 @@ class ParticleSource1
 			    if (gc.getPosition()[1] == 0) //first gpu
 			    {
 				Window window(MovingWindow::getInstance().getWindow( *currentStep ));
-				guarding += (subGrid.getLocalDomain().size - window.localDimensions.size) / MappingDesc::SuperCellSize::toRT();
+				guarding += ((subGrid.getLocalDomain().size - window.localDimensions.size) / MappingDesc::SuperCellSize::toRT() + 0.5f);
 			    }
 			}
 		    }
