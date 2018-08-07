@@ -498,9 +498,9 @@ public:
              "The url of the isaac server to connect to. Default is \"localhost\".")
             ("isaac.port", po::value< uint16_t > (&port)->default_value(2460),
              "The port of the isaac server to connect to. Default is 2460.")
-            ("isaac.width", po::value< uint32_t > (&width)->default_value(1600),
+            ("isaac.width", po::value< uint32_t > (&width)->default_value(1024),
              "The width per isaac framebuffer. Default is 1024.")
-            ("isaac.height", po::value< uint32_t > (&height)->default_value(900),
+            ("isaac.height", po::value< uint32_t > (&height)->default_value(768),
              "The height per isaac framebuffer. Default is 768.")
             ("isaac.directPause", po::value< bool > (&direct_pause)->default_value(false),
              "Direct pausing after starting simulation. Default is false.")
