@@ -60,6 +60,25 @@ namespace startPosition
 
 namespace manipulators
 {
+	
+    struct FunctorSaveCell
+    {
+        template< typename T_Particle >
+        HDINLINE void operator()(
+            DataSpace< simDim > const & particleOffsetToTotalOrigin,
+            T_Particle & particle
+        )
+        {
+            particle[ originCell_ ].x() = particleOffsetToTotalOrigin.x();
+	    particle[ originCell_ ].y() = particleOffsetToTotalOrigin.y();
+    	    particle[ originCell_ ].z() = particleOffsetToTotalOrigin.z();
+        }
+        static constexpr char const * name = "saveCell";
+    };
+
+    using SaveCell = unary::FreeTotalCellOffset<
+       FunctorSaveCell
+    >;
 
     struct SetIonToNeutral
     {

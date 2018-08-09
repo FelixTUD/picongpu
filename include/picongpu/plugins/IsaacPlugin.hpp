@@ -233,9 +233,9 @@ public:
   {
     
     auto const particle = frame[ i ];
-    float3_X const mom = particle[ momentum_ ];
+    float3_X const cell = particle[ originCell_ ];
     //return {ISAAC_MAX(ISAAC_MIN((mom[0] + 1) * 0.5f, 1.0f), 0.0f), ISAAC_MAX(ISAAC_MIN((mom[1] + 1) * 0.5f, 1.0f), 0.0f), ISAAC_MAX(ISAAC_MIN((mom[2] + 1) * 0.5f, 1.0f), 0.0f)};
-    return {mom[0], mom[1], mom[2]};
+    return {cell[0], cell[1], cell[2]};
     //return {mom[0] * 4, mom[1] * mom[1] * 10, -mom[0] * 4};
     //return {0.3f, 0.7f, 0.0f};
   }

@@ -47,7 +47,11 @@ namespace particles
             densityProfiles::Gaussian,
             startPosition::Random2ppc,
             PIC_Electrons
-        >
+        >,
+	Manipulate<
+            manipulators::SaveCell,
+            PIC_Electrons
+	>
 #   if( PARAM_IONS == 1 )
         ,
         DeriveSpecies<
@@ -65,7 +69,11 @@ namespace particles
         Manipulate<
             manipulators::SetBoundElectrons,
             PIC_Ions
-        >
+        >,
+	Manipulate<
+            manipulators::SaveCell,
+            PIC_Ions
+	>
 #endif
     >;
 

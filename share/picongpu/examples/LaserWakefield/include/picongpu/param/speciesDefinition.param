@@ -39,7 +39,8 @@ namespace picongpu
 using DefaultParticleAttributes = MakeSeq_t<
     position<position_pic>,
     momentum,
-    weighting
+    weighting,
+    originCell
 >;
 
 /* attribute sequence for species: ions */
