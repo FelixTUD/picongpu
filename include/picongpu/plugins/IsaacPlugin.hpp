@@ -152,7 +152,7 @@ class TFieldSource< FieldTmpOperation< FrameSolver, ParticleType > >
                 auto particles = dc.get< ParticleType >( ParticleType::FrameType::getName(), true );
 
                 fieldTmp->getGridBuffer().getDeviceBuffer().setValue( FieldTmp::ValueType(0.0) );
-                fieldTmp->template computeValue < CORE + BORDER, FrameSolver > (*particles, *currentStep);
+                fieldTmp->template computeValue< CORE + BORDER, FrameSolver >(*particles, *currentStep);
                 EventTask fieldTmpEvent = fieldTmp->asyncCommunication(__getTransactionEvent());
 
                 __setTransactionEvent(fieldTmpEvent);
@@ -321,8 +321,7 @@ class ParticleSource1
 		ISAAC_HOST_DEVICE_INLINE ParticleIterator1<feature_dim, ParticlesBoxType> getIterator(const isaac_uint3& local_grid_coord) const
 		{
 			constexpr uint32_t frameSize = pmacc::math::CT::volume< typename FrameType::SuperCellSize >::type::value;
-			uint3 local_grid = {local_grid_coord.x + guarding[0], local_grid_coord.y + guarding[1], local_grid_coord.z + guarding[2]};
-			DataSpace< simDim > const superCellIdx = DataSpace< simDim >( local_grid );
+			DataSpace< simDim > const superCellIdx(local_grid_coord.x + guarding[0], local_grid_coord.y + guarding[1], local_grid_coord.z + guarding[2]);
 			const auto & superCell = pb[0].getSuperCell(superCellIdx);
 			size_t size = superCell.getNumParticles();
 			FramePtr currentFrame = pb[0].getFirstFrame( superCellIdx );
