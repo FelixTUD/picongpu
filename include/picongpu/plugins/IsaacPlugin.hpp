@@ -463,31 +463,34 @@ public:
 
 		if(writeSteps > 0)
 		{
-		    if (rank == 0)
+		    if (writeSteps > 100)
 		    {
-			int min = std::numeric_limits<int>::max();
-			int max = std::numeric_limits<int>::min();
-			int average = 0;
-			int times[numProc];
-			MPI_Gather(&drawing_time, 1, MPI_INT, times, 1, MPI_INT, 0, mpi_world);
-			csvFile << writeSteps << ",";
-			for(int i = 0; i < numProc; i++)
+			if (rank == 0)
 			{
-			    min = (times[i] < min) ? times[i] : min;
-			    max = (times[i] > max) ? times[i] : max;
-			    average += times[i];
-			    csvFile << times[i] << ",";
+			    int min = std::numeric_limits<int>::max();
+			    int max = std::numeric_limits<int>::min();
+			    int average = 0;
+			    int times[numProc];
+			    MPI_Gather(&drawing_time, 1, MPI_INT, times, 1, MPI_INT, 0, mpi_world);
+			    csvFile << writeSteps << ",";
+			    for(int i = 0; i < numProc; i++)
+			    {
+				min = (times[i] < min) ? times[i] : min;
+				max = (times[i] > max) ? times[i] : max;
+				average += times[i];
+				csvFile << times[i] << ",";
+			    }
+			    
+			    average /= numProc;
+			    csvFile << min << "," << max << "," << average << "\n";
+			}
+			else{
+			    MPI_Gather(&drawing_time, 1, MPI_INT, NULL, 0, MPI_INT, 0, mpi_world);
 			}
 			
-			average /= numProc;
-			csvFile << min << "," << max << "," << average << "\n";
+			if(writeSteps == 1)
+			  csvFile.close();
 		    }
-		    else{
-			MPI_Gather(&drawing_time, 1, MPI_INT, NULL, 0, MPI_INT, 0, mpi_world);
-		    }
-		    
-		    if(writeSteps == 1)
-			csvFile.close();
 		    writeSteps--;
 		}
 		
@@ -497,13 +500,13 @@ public:
 		    if(json_is_string(json_benchmark))
 		    {
 			std::string s(json_string_value(json_benchmark));
-			writeSteps = 100;
+			writeSteps = 101;
 			csvFile.open(s);
 			std::cout << "Benchmark start filename: " << s << std::endl;
-			csvFile << "frame,";
+			csvFile << "Frame,";
 			for(int i = 0; i < numProc; i++)
 			{
-			    csvFile << "gpu " << numProc << ",";
+			    csvFile << "GPU " << i << ",";
 			}
 			csvFile << "min, " << "max, " << "average" << "\n";
 			
