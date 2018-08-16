@@ -37,6 +37,7 @@
 #include <boost/fusion/include/as_list.hpp>
 #include <boost/mpl/vector.hpp>
 #include <boost/mpl/transform.hpp>
+#include <limits>
 
 namespace picongpu
 {
@@ -433,6 +434,8 @@ public:
         {
             step = 0;
             bool pause = false;
+	    int writeSteps = 0;
+	    std::ofstream csvFile;
             do
             {
                 //update of the position for moving window simulations
@@ -452,9 +455,64 @@ public:
                     json_object_set_new( visualization->getJsonMetaRoot(), "cell count", json_integer( cell_count ) );
                     json_object_set_new( visualization->getJsonMetaRoot(), "particle count", json_integer( particle_count ) );
                 }
+
                 uint64_t start = visualization->getTicksUs();
-                json_t* meta = visualization->doVisualization(META_MASTER, &currentStep, !pause);
+                //json_t* meta = visualization->doVisualization(META_MASTER, &currentStep, !pause);
+		json_t* meta = visualization->doVisualization(META_MASTER, &currentStep, (!pause || writeSteps > 0));
                 drawing_time = visualization->getTicksUs() - start;
+
+		if(writeSteps > 0)
+		{
+		    if (rank == 0)
+		    {
+			int min = std::numeric_limits<int>::max();
+			int max = std::numeric_limits<int>::min();
+			int average = 0;
+			int times[numProc];
+			MPI_Gather(&drawing_time, 1, MPI_INT, times, 1, MPI_INT, 0, mpi_world);
+			csvFile << writeSteps << ",";
+			for(int i = 0; i < numProc; i++)
+			{
+			    min = (times[i] < min) ? times[i] : min;
+			    max = (times[i] > max) ? times[i] : max;
+			    average += times[i];
+			    csvFile << times[i] << ",";
+			}
+			
+			average /= numProc;
+			csvFile << min << "," << max << "," << average << "\n";
+		    }
+		    else{
+			MPI_Gather(&drawing_time, 1, MPI_INT, NULL, 0, MPI_INT, 0, mpi_world);
+		    }
+		    
+		    if(writeSteps == 1)
+			csvFile.close();
+		    writeSteps--;
+		}
+		
+		json_t* json_benchmark;
+		if ( meta && ( json_benchmark = json_object_get(meta, "benchmark file") ) )
+                {
+		    if(json_is_string(json_benchmark))
+		    {
+			std::string s(json_string_value(json_benchmark));
+			writeSteps = 100;
+			csvFile.open(s);
+			std::cout << "Benchmark start filename: " << s << std::endl;
+			csvFile << "frame,";
+			for(int i = 0; i < numProc; i++)
+			{
+			    csvFile << "gpu " << numProc << ",";
+			}
+			csvFile << "min, " << "max, " << "average" << "\n";
+			
+		    }
+		    else
+		    {
+			std::cerr << "json error: benchmark file must be of type string!" << std::endl;
+		    }
+		}
                 json_t* json_pause = nullptr;
                 if ( meta && (json_pause = json_object_get(meta, "pause")) && json_boolean_value( json_pause ) )
                     pause = !pause;
@@ -522,6 +580,7 @@ private:
     uint32_t jpeg_quality;
     int rank;
     int numProc;
+    MPI_Comm mpi_world;
     bool movingWindow;
     //ParticleSource1 pSource1;
     ParticleList particleSources;
@@ -543,8 +602,9 @@ private:
     {
         if(!notifyPeriod.empty())
         {
-            MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-            MPI_Comm_size(MPI_COMM_WORLD, &numProc);
+	    MPI_Comm_dup(MPI_COMM_WORLD, &mpi_world);
+            MPI_Comm_rank(mpi_world, &rank);
+            MPI_Comm_size(mpi_world, &numProc);
             if ( MovingWindow::getInstance().isSlidingWindowActive() )
                 movingWindow = true;
             float_X minCellSize = math::min( cellSize[0], math::min( cellSize[1], cellSize[2] ) );
