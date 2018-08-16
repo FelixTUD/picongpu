@@ -468,7 +468,7 @@ public:
 
 		if(writeSteps > 0)
 		{
-		    if (writeSteps > 100)
+		    if (writeSteps <= 100)
 		    {
 			if (rank == 0)
 			{
