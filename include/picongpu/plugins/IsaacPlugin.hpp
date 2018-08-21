@@ -458,6 +458,7 @@ public:
 
                 uint64_t start = visualization->getTicksUs();
                 //json_t* meta = visualization->doVisualization(META_MASTER, &currentStep, !pause);
+		visualization->kernel_time = 0;
 		json_t* meta = visualization->doVisualization(META_MASTER, &currentStep, (!pause || writeSteps > 0));
                 drawing_time = visualization->getTicksUs() - start;
 
@@ -465,13 +466,14 @@ public:
 		{
 		    if (writeSteps <= 100)
 		    {
+			int time = visualization->kernel_time;
 			if (rank == 0)
 			{
 			    int min = std::numeric_limits<int>::max();
 			    int max = std::numeric_limits<int>::min();
 			    int average = 0;
 			    int times[numProc];
-			    MPI_Gather(&drawing_time, 1, MPI_INT, times, 1, MPI_INT, 0, mpi_world);
+			    MPI_Gather(&time, 1, MPI_INT, times, 1, MPI_INT, 0, mpi_world);
 			    csvFile << writeSteps << ",";
 			    for(int i = 0; i < numProc; i++)
 			    {
@@ -480,11 +482,27 @@ public:
 				average += times[i];
 				csvFile << times[i] << ",";
 			    }
+			    average /= numProc;
+			    csvFile << min << "," << max << "," << average << ",,";
+			    
+			    min = std::numeric_limits<int>::max();
+			    max = std::numeric_limits<int>::min();
+			    average = 0;
+			    int total_times[numProc];
+			    MPI_Gather(&drawing_time, 1, MPI_INT, total_times, 1, MPI_INT, 0, mpi_world);
+			    for(int i = 0; i < numProc; i++)
+			    {
+				min = (total_times[i] < min) ? total_times[i] : min;
+				max = (total_times[i] > max) ? total_times[i] : max;
+				average += total_times[i];
+				csvFile << total_times[i] << ",";
+			    }
 			    
 			    average /= numProc;
 			    csvFile << min << "," << max << "," << average << "\n";
 			}
 			else{
+			    MPI_Gather(&time, 1, MPI_INT, NULL, 0, MPI_INT, 0, mpi_world);
 			    MPI_Gather(&drawing_time, 1, MPI_INT, NULL, 0, MPI_INT, 0, mpi_world);
 			}
 			
@@ -506,9 +524,14 @@ public:
 			csvFile << "Frame,";
 			for(int i = 0; i < numProc; i++)
 			{
-			    csvFile << "GPU " << i << ",";
+			    csvFile << "GPU " << i << "-kernel,";
 			}
-			csvFile << "min, " << "max, " << "average" << "\n";
+			csvFile << "min-kernel, " << "max-kernel, " << "average-kernel" << ",,";
+			for(int i = 0; i < numProc; i++)
+			{
+			    csvFile << "GPU " << i << "-all,";
+			}
+			csvFile << "min-all, " << "max-all, " << "average-all" << "\n";
 			
 		    }
 		    else
