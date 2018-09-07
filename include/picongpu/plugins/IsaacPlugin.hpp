@@ -435,6 +435,7 @@ public:
             step = 0;
             bool pause = false;
 	    int writeSteps = 0;
+	    int rotationSteps = 0;
 	    std::ofstream csvFile;
             do
             {
@@ -459,7 +460,7 @@ public:
                 uint64_t start = visualization->getTicksUs();
                 //json_t* meta = visualization->doVisualization(META_MASTER, &currentStep, !pause);
 		visualization->kernel_time = 0;
-		json_t* meta = visualization->doVisualization(META_MASTER, &currentStep, (!pause || writeSteps > 0));
+		json_t* meta = visualization->doVisualization(META_MASTER, &currentStep, (!pause || writeSteps > 0 || rotationSteps > 0));
                 drawing_time = visualization->getTicksUs() - start;
 
 		if(writeSteps > 0)
@@ -512,6 +513,77 @@ public:
 		    writeSteps--;
 		}
 		
+		if(rotationSteps > 0)
+		{
+		    if (rotationSteps <= 1080)
+		    {
+
+			int time = visualization->kernel_time;
+			if (rank == 0)
+			{
+			    
+			    int min = std::numeric_limits<int>::max();
+			    int max = std::numeric_limits<int>::min();
+			    int average = 0;
+			    int times[numProc];
+			    MPI_Gather(&time, 1, MPI_INT, times, 1, MPI_INT, 0, mpi_world);
+			    int smallRotationSteps = 1080 - rotationSteps;
+			    json_t * feedback = json_object();
+			    json_t *array = json_array();
+			    if(smallRotationSteps < 360){
+			      json_array_append(array, json_real(1.0));
+			      json_array_append(array, json_real(0.0));
+			      json_array_append(array, json_real(0.0));
+			    }
+			    else if(smallRotationSteps < 720){
+			      json_array_append(array, json_real(0.0));
+			      json_array_append(array, json_real(1.0));
+			      json_array_append(array, json_real(0.0));
+			    }
+			    else {
+			      json_array_append(array, json_real(0.0));
+			      json_array_append(array, json_real(0.0));
+			      json_array_append(array, json_real(1.0));
+			    }
+			    json_array_append(array, json_real(double(1.0)));
+			    json_object_set_new(feedback, "rotation axis", array);
+			    visualization->getCommunicator()->setMessage( feedback );
+			    csvFile << smallRotationSteps << ",";
+			    for(int i = 0; i < numProc; i++)
+			    {
+				min = (times[i] < min) ? times[i] : min;
+				max = (times[i] > max) ? times[i] : max;
+				average += times[i];
+			    }
+			    average /= numProc;
+			    csvFile << min/1000.0 << "," << max/1000.0 << "," << average/1000.0 << ",,";
+			    
+			    min = std::numeric_limits<int>::max();
+			    max = std::numeric_limits<int>::min();
+			    average = 0;
+			    int total_times[numProc];
+			    MPI_Gather(&drawing_time, 1, MPI_INT, total_times, 1, MPI_INT, 0, mpi_world);
+			    for(int i = 0; i < numProc; i++)
+			    {
+				min = (total_times[i] < min) ? total_times[i] : min;
+				max = (total_times[i] > max) ? total_times[i] : max;
+				average += total_times[i];
+			    }
+			    
+			    average /= numProc;
+			    csvFile << min/1000.0 << "," << max/1000.0 << "," << average/1000.0 << "\n";
+			}
+			else{
+			    MPI_Gather(&time, 1, MPI_INT, NULL, 0, MPI_INT, 0, mpi_world);
+			    MPI_Gather(&drawing_time, 1, MPI_INT, NULL, 0, MPI_INT, 0, mpi_world);
+			}
+			
+			if(rotationSteps == 1)
+			  csvFile.close();
+		    }
+		    rotationSteps--;
+		}
+		
 		json_t* json_benchmark;
 		if ( meta && ( json_benchmark = json_object_get(meta, "benchmark file") ) )
                 {
@@ -531,6 +603,25 @@ public:
 			{
 			    csvFile << "GPU " << i << "-all,";
 			}
+			csvFile << "min-all, " << "max-all, " << "average-all" << "\n";
+			
+		    }
+		    else
+		    {
+			std::cerr << "json error: benchmark file must be of type string!" << std::endl;
+		    }
+		}
+		json_t* json_rotationBenchmark;
+		if ( meta && ( json_rotationBenchmark = json_object_get(meta, "benchmark rotation") ) )
+                {
+		    if(json_is_string(json_rotationBenchmark))
+		    {
+			std::string s(json_string_value(json_rotationBenchmark));
+			rotationSteps = 1081;
+			csvFile.open(s);
+			std::cout << "Benchmark start filename: " << s << std::endl;
+			csvFile << "Timestep,";
+			csvFile << "min-kernel, " << "max-kernel, " << "average-kernel" << ",,";
 			csvFile << "min-all, " << "max-all, " << "average-all" << "\n";
 			
 		    }
