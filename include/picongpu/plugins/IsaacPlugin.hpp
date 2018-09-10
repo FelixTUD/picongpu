@@ -186,11 +186,13 @@ class TFieldSource< FieldTmpOperation< FrameSolver, ParticleType > >
         }
 };
 
+
 template<size_t feature_dim, typename ParticlesBoxType>
 class ParticleIterator1
 {
 public:
   using FramePtr = typename ParticlesBoxType::FramePtr;
+  // size of the particle list
   size_t size;
   
   ISAAC_NO_HOST_DEVICE_WARNING
@@ -206,6 +208,7 @@ public:
   
   ISAAC_HOST_DEVICE_INLINE void next()
   {
+    // iterate particles look for next frame
     i++;
     if(i >= frameSize)
     {
@@ -214,6 +217,7 @@ public:
     }
   }
   
+  // returns current particle position
     ISAAC_HOST_DEVICE_INLINE isaac_float3 getPosition() const
   {
     auto const particle = frame[ i ];
@@ -224,7 +228,10 @@ public:
     // offset in the actual superCell = cell offset in the supercell
     const DataSpace<simDim> frameCellOffset(DataSpaceOperations<simDim>::template map<MappingDesc::SuperCellSize > (frameCellNr));
     
+    // added offsets 
     float3_X const absoluteOffset(particle[ position_ ] + float3_X(frameCellOffset));
+    
+    // calculate scaled position
     float3_X const pos(
       absoluteOffset.x() * (1._X / float_X(MappingDesc::SuperCellSize::x::value)),
       absoluteOffset.y() * (1._X / float_X(MappingDesc::SuperCellSize::y::value)),
@@ -235,17 +242,17 @@ public:
     return {pos[0], pos[1], pos[2]};
   }
   
+  // returns particle momentum as color attribute
     ISAAC_HOST_DEVICE_INLINE isaac_float_dim<feature_dim> getAttribute() const
   {
     
     auto const particle = frame[ i ];
     float3_X const mom = particle[ momentum_ ];
-    //return {ISAAC_MAX(ISAAC_MIN((mom[0] + 1) * 0.5f, 1.0f), 0.0f), ISAAC_MAX(ISAAC_MIN((mom[1] + 1) * 0.5f, 1.0f), 0.0f), ISAAC_MAX(ISAAC_MIN((mom[2] + 1) * 0.5f, 1.0f), 0.0f)};
     return {mom[0], mom[1], mom[2]};
-    //return {mom[0] * 4, mom[1] * mom[1] * 10, -mom[0] * 4};
-    //return {0.3f, 0.7f, 0.0f};
   }
   
+  
+  // returns constant radius
       ISAAC_HOST_DEVICE_INLINE isaac_float getRadius() const
   {
 //     auto const particle = frame[ i ];
@@ -296,6 +303,7 @@ class ParticleSource1
 		
 		void update(bool enabled, void* pointer)
 		{
+		    // update movingWindow cells
 		    if (enabled)
 		    {
 			uint32_t* currentStep = (uint32_t*)pointer;
@@ -318,6 +326,7 @@ class ParticleSource1
 		    }
 		}
 		
+		// returns particleIterator with correct feature_dim and cell specific particlebox
 		ISAAC_NO_HOST_DEVICE_WARNING
 		ISAAC_HOST_DEVICE_INLINE ParticleIterator1<feature_dim, ParticlesBoxType> getIterator(const isaac_uint3& local_grid_coord) const
 		{
@@ -384,7 +393,7 @@ public:
     typedef boost::mpl::int_< simDim > SimDim;
     static const size_t textureDim = 1024;
     using SourceList = bmpl::transform<boost::fusion::result_of::as_list< Fields_Seq >::type,Transformoperator<bmpl::_1>>::type;
-    //using ParticleList = boost::fusion::list<ParticleSource1>;
+    // create compile time particle list
     using ParticleList = bmpl::transform<boost::fusion::result_of::as_list< VectorAllSpecies >::type,ParticleTransformoperator<bmpl::_1>>::type;
     using VisualizationType = IsaacVisualization
     <
