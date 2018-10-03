@@ -320,7 +320,8 @@ class ParticleSource1
 			    if (gc.getPosition()[1] == 0) //first gpu
 			    {
 				Window window(MovingWindow::getInstance().getWindow( *currentStep ));
-				guarding += ((subGrid.getLocalDomain().size - window.localDimensions.size) / MappingDesc::SuperCellSize::toRT() + 0.5f);
+				for(uint i = 0; i < simDim; i++)
+				    guarding[i] += int((subGrid.getLocalDomain().size[i] - window.localDimensions.size[i]) / (float)MappingDesc::SuperCellSize::toRT()[i]);
 			    }
 			}
 		    }
@@ -459,6 +460,7 @@ public:
                     Window window(MovingWindow::getInstance().getWindow( currentStep ));
                     visualization->updatePosition( window.localDimensions.offset );
                     visualization->updateLocalSize( window.localDimensions.size );
+		    visualization->updateLocalParticleSize( window.localDimensions.size / MappingDesc::SuperCellSize::toRT());
                     visualization->updateBounding();
                 }
                 if (rank == 0 && visualization->kernel_time)
@@ -764,7 +766,7 @@ private:
                 url,
                 port,
                 framebuffer_size,
-                subGrid.getGlobalDomain().size,
+                MovingWindow::getInstance().getWindow( 0 ).globalDimensions.size,
                 subGrid.getLocalDomain().size,
 		subGrid.getLocalDomain().size / SuperCellSize::toRT(),
                 subGrid.getLocalDomain().offset,
