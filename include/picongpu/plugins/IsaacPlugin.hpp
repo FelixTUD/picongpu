@@ -276,68 +276,67 @@ template< typename ParticlesType >
 class ParticleSource1
 {
 
-	 using ParticlesBoxType = typename ParticlesType::ParticlesBoxType;
-	 using FramePtr = typename ParticlesBoxType::FramePtr;
-	 using FrameType = typename ParticlesBoxType::FrameType;
-// 	 using SuperCellSize = typename MappingDesc::SuperCellSize;
-	 
-	public:
-		static const size_t feature_dim = 3;
-		bool movingWindow;
-		DataSpace< simDim > guarding;
-		ISAAC_NO_HOST_DEVICE_WARNING
-		ParticleSource1 ()
-		{}
+    using ParticlesBoxType = typename ParticlesType::ParticlesBoxType;
+    using FramePtr = typename ParticlesBoxType::FramePtr;
+    using FrameType = typename ParticlesBoxType::FrameType;
+        
+public:
+    static const size_t feature_dim = 3;
+    bool movingWindow;
+    DataSpace< simDim > guarding;
+    ISAAC_NO_HOST_DEVICE_WARNING
+    ParticleSource1 ()
+    {}
 
-		ISAAC_HOST_INLINE static std::string getName()
-		{
-			return ParticlesType::FrameType::getName() + std::string(" particle");
-		}
+    ISAAC_HOST_INLINE static std::string getName()
+    {
+        return ParticlesType::FrameType::getName() + std::string(" particle");
+    }
 
-		pmacc::memory::Array<ParticlesBoxType,1> pb;
-		
-		void init(bool movingWindow)
-		{
-		    this->movingWindow = movingWindow;
-		}
-		
-		void update(bool enabled, void* pointer)
-		{
-		    // update movingWindow cells
-		    if (enabled)
-		    {
-			uint32_t* currentStep = (uint32_t*)pointer;
-			DataConnector &dc = Environment<>::get().DataConnector();
-			//constexpr uint32_t maxParticlesPerFrame = pmacc::math::CT::volume< SuperCellSize >::type::value;
-			auto particles = dc.get< ParticlesType >( ParticlesType::FrameType::getName(), true );
-			pb[0] = particles->getDeviceParticlesBox();
-			
-			const SubGrid<simDim>& subGrid = Environment< simDim >::get().SubGrid();
-			guarding = GuardSize::toRT();
-			if (movingWindow)
-			{
-			    GridController<simDim> &gc = Environment<simDim>::get().GridController();
-			    if (gc.getPosition()[1] == 0) //first gpu
-			    {
-				Window window(MovingWindow::getInstance().getWindow( *currentStep ));
-				for(uint i = 0; i < simDim; i++)
-				    guarding[i] += int((subGrid.getLocalDomain().size[i] - window.localDimensions.size[i]) / (float)MappingDesc::SuperCellSize::toRT()[i]);
-			    }
-			}
-		    }
-		}
-		
-		// returns particleIterator with correct feature_dim and cell specific particlebox
-		ISAAC_NO_HOST_DEVICE_WARNING
-		ISAAC_HOST_DEVICE_INLINE ParticleIterator1<feature_dim, ParticlesBoxType> getIterator(const isaac_uint3& local_grid_coord) const
-		{
-			constexpr uint32_t frameSize = pmacc::math::CT::volume< typename FrameType::SuperCellSize >::type::value;
-			DataSpace< simDim > const superCellIdx(local_grid_coord.x + guarding[0], local_grid_coord.y + guarding[1], local_grid_coord.z + guarding[2]);
-			const auto & superCell = pb[0].getSuperCell(superCellIdx);
-			size_t size = superCell.getNumParticles();
-			FramePtr currentFrame = pb[0].getFirstFrame( superCellIdx );
-			return ParticleIterator1<feature_dim, ParticlesBoxType>(size, pb[0], currentFrame, frameSize);
-		}
+    pmacc::memory::Array<ParticlesBoxType,1> pb;
+    
+    void init(bool movingWindow)
+    {
+        this->movingWindow = movingWindow;
+    }
+    
+    void update(bool enabled, void* pointer)
+    {
+        // update movingWindow cells
+        if (enabled)
+    {
+            uint32_t* currentStep = (uint32_t*)pointer;
+            DataConnector &dc = Environment<>::get().DataConnector();
+            //constexpr uint32_t maxParticlesPerFrame = pmacc::math::CT::volume< SuperCellSize >::type::value;
+            auto particles = dc.get< ParticlesType >( ParticlesType::FrameType::getName(), true );
+            pb[0] = particles->getDeviceParticlesBox();
+            
+            const SubGrid<simDim>& subGrid = Environment< simDim >::get().SubGrid();
+            guarding = GuardSize::toRT();
+            if (movingWindow)
+            {
+                GridController<simDim> &gc = Environment<simDim>::get().GridController();
+                if (gc.getPosition()[1] == 0) //first gpu
+                {
+                    Window window(MovingWindow::getInstance().getWindow( *currentStep ));
+                    for(uint i = 0; i < simDim; i++)
+                        guarding[i] += int((subGrid.getLocalDomain().size[i] - window.localDimensions.size[i]) / (float)MappingDesc::SuperCellSize::toRT()[i]);
+                }
+            }
+        }
+    }
+    
+    // returns particleIterator with correct feature_dim and cell specific particlebox
+    ISAAC_NO_HOST_DEVICE_WARNING
+    ISAAC_HOST_DEVICE_INLINE ParticleIterator1<feature_dim, ParticlesBoxType> getIterator(const isaac_uint3& local_grid_coord) const
+    {
+        constexpr uint32_t frameSize = pmacc::math::CT::volume< typename FrameType::SuperCellSize >::type::value;
+        DataSpace< simDim > const superCellIdx(local_grid_coord.x + guarding[0], local_grid_coord.y + guarding[1], local_grid_coord.z + guarding[2]);
+        const auto & superCell = pb[0].getSuperCell(superCellIdx);
+        size_t size = superCell.getNumParticles();
+        FramePtr currentFrame = pb[0].getFirstFrame( superCellIdx );
+        return ParticleIterator1<feature_dim, ParticlesBoxType>(size, pb[0], currentFrame, frameSize);
+    }
 };
 
 template< typename T >
@@ -449,9 +448,9 @@ public:
         {
             step = 0;
             bool pause = false;
-	    int writeSteps = 0;
-	    int rotationSteps = 0;
-	    std::ofstream csvFile;
+            int writeSteps = 0;
+            int rotationSteps = 0;
+            std::ofstream csvFile;
             do
             {
                 //update of the position for moving window simulations
@@ -460,7 +459,7 @@ public:
                     Window window(MovingWindow::getInstance().getWindow( currentStep ));
                     visualization->updatePosition( window.localDimensions.offset );
                     visualization->updateLocalSize( window.localDimensions.size );
-		    visualization->updateLocalParticleSize( window.localDimensions.size / MappingDesc::SuperCellSize::toRT());
+                    visualization->updateLocalParticleSize( window.localDimensions.size / MappingDesc::SuperCellSize::toRT());
                     visualization->updateBounding();
                 }
                 if (rank == 0 && visualization->kernel_time)
@@ -475,177 +474,177 @@ public:
 
                 uint64_t start = visualization->getTicksUs();
                 //json_t* meta = visualization->doVisualization(META_MASTER, &currentStep, !pause);
-		visualization->kernel_time = 0;
-		json_t* meta = visualization->doVisualization(META_MASTER, &currentStep, (!pause || writeSteps > 0 || rotationSteps > 0));
+                visualization->kernel_time = 0;
+                json_t* meta = visualization->doVisualization(META_MASTER, &currentStep, (!pause || writeSteps > 0 || rotationSteps > 0));
                 drawing_time = visualization->getTicksUs() - start;
 
-		if(writeSteps > 0)
-		{
-		    if (writeSteps <= 100)
-		    {
-			int time = visualization->kernel_time;
-			if (rank == 0)
-			{
-			    int min = std::numeric_limits<int>::max();
-			    int max = std::numeric_limits<int>::min();
-			    int average = 0;
-			    int times[numProc];
-			    MPI_Gather(&time, 1, MPI_INT, times, 1, MPI_INT, 0, mpi_world);
-			    csvFile << writeSteps << ",";
-			    for(int i = 0; i < numProc; i++)
-			    {
-				min = (times[i] < min) ? times[i] : min;
-				max = (times[i] > max) ? times[i] : max;
-				average += times[i];
-				csvFile << times[i] << ",";
-			    }
-			    average /= numProc;
-			    csvFile << min << "," << max << "," << average << ",,";
-			    
-			    min = std::numeric_limits<int>::max();
-			    max = std::numeric_limits<int>::min();
-			    average = 0;
-			    int total_times[numProc];
-			    MPI_Gather(&drawing_time, 1, MPI_INT, total_times, 1, MPI_INT, 0, mpi_world);
-			    for(int i = 0; i < numProc; i++)
-			    {
-				min = (total_times[i] < min) ? total_times[i] : min;
-				max = (total_times[i] > max) ? total_times[i] : max;
-				average += total_times[i];
-				csvFile << total_times[i] << ",";
-			    }
-			    
-			    average /= numProc;
-			    csvFile << min << "," << max << "," << average << "\n";
-			}
-			else{
-			    MPI_Gather(&time, 1, MPI_INT, NULL, 0, MPI_INT, 0, mpi_world);
-			    MPI_Gather(&drawing_time, 1, MPI_INT, NULL, 0, MPI_INT, 0, mpi_world);
-			}
-			
-			if(writeSteps == 1)
-			  csvFile.close();
-		    }
-		    writeSteps--;
-		}
-		
-		if(rotationSteps > 0)
-		{
-		    if (rotationSteps <= 1080)
-		    {
+                if(writeSteps > 0)
+                {
+                    if (writeSteps <= 100)
+                    {
+                        int time = visualization->kernel_time;
+                        if (rank == 0)
+                        {
+                            int min = std::numeric_limits<int>::max();
+                            int max = std::numeric_limits<int>::min();
+                            int average = 0;
+                            int times[numProc];
+                            MPI_Gather(&time, 1, MPI_INT, times, 1, MPI_INT, 0, mpi_world);
+                            csvFile << writeSteps << ",";
+                            for(int i = 0; i < numProc; i++)
+                            {
+                                min = (times[i] < min) ? times[i] : min;
+                                max = (times[i] > max) ? times[i] : max;
+                                average += times[i];
+                                csvFile << times[i] << ",";
+                            }
+                            average /= numProc;
+                            csvFile << min << "," << max << "," << average << ",,";
+                            
+                            min = std::numeric_limits<int>::max();
+                            max = std::numeric_limits<int>::min();
+                            average = 0;
+                            int total_times[numProc];
+                            MPI_Gather(&drawing_time, 1, MPI_INT, total_times, 1, MPI_INT, 0, mpi_world);
+                            for(int i = 0; i < numProc; i++)
+                            {
+                                min = (total_times[i] < min) ? total_times[i] : min;
+                                max = (total_times[i] > max) ? total_times[i] : max;
+                                average += total_times[i];
+                                csvFile << total_times[i] << ",";
+                            }
+                            
+                            average /= numProc;
+                            csvFile << min << "," << max << "," << average << "\n";
+                        }
+                        else{
+                            MPI_Gather(&time, 1, MPI_INT, NULL, 0, MPI_INT, 0, mpi_world);
+                            MPI_Gather(&drawing_time, 1, MPI_INT, NULL, 0, MPI_INT, 0, mpi_world);
+                        }
+                        
+                        if(writeSteps == 1)
+                        csvFile.close();
+                    }
+                    writeSteps--;
+                }
+                
+                if(rotationSteps > 0)
+                {
+                    if (rotationSteps <= 1080)
+                    {
 
-			int time = visualization->kernel_time;
-			if (rank == 0)
-			{
-			    
-			    int min = std::numeric_limits<int>::max();
-			    int max = std::numeric_limits<int>::min();
-			    int average = 0;
-			    int times[numProc];
-			    MPI_Gather(&time, 1, MPI_INT, times, 1, MPI_INT, 0, mpi_world);
-			    int smallRotationSteps = 1080 - rotationSteps;
-			    json_t * feedback = json_object();
-			    json_t *array = json_array();
-			    if(smallRotationSteps < 360){
-			      json_array_append(array, json_real(1.0));
-			      json_array_append(array, json_real(0.0));
-			      json_array_append(array, json_real(0.0));
-			    }
-			    else if(smallRotationSteps < 720){
-			      json_array_append(array, json_real(0.0));
-			      json_array_append(array, json_real(1.0));
-			      json_array_append(array, json_real(0.0));
-			    }
-			    else {
-			      json_array_append(array, json_real(0.0));
-			      json_array_append(array, json_real(0.0));
-			      json_array_append(array, json_real(1.0));
-			    }
-			    json_array_append(array, json_real(double(1.0)));
-			    json_object_set_new(feedback, "rotation axis", array);
-			    visualization->getCommunicator()->setMessage( feedback );
-			    csvFile << smallRotationSteps << ",";
-			    for(int i = 0; i < numProc; i++)
-			    {
-				min = (times[i] < min) ? times[i] : min;
-				max = (times[i] > max) ? times[i] : max;
-				average += times[i];
-			    }
-			    average /= numProc;
-			    csvFile << min/1000.0 << "," << max/1000.0 << "," << average/1000.0 << ",,";
-			    
-			    min = std::numeric_limits<int>::max();
-			    max = std::numeric_limits<int>::min();
-			    average = 0;
-			    int total_times[numProc];
-			    MPI_Gather(&drawing_time, 1, MPI_INT, total_times, 1, MPI_INT, 0, mpi_world);
-			    for(int i = 0; i < numProc; i++)
-			    {
-				min = (total_times[i] < min) ? total_times[i] : min;
-				max = (total_times[i] > max) ? total_times[i] : max;
-				average += total_times[i];
-			    }
-			    
-			    average /= numProc;
-			    csvFile << min/1000.0 << "," << max/1000.0 << "," << average/1000.0 << "\n";
-			}
-			else{
-			    MPI_Gather(&time, 1, MPI_INT, NULL, 0, MPI_INT, 0, mpi_world);
-			    MPI_Gather(&drawing_time, 1, MPI_INT, NULL, 0, MPI_INT, 0, mpi_world);
-			}
-			
-			if(rotationSteps == 1)
-			  csvFile.close();
-		    }
-		    rotationSteps--;
-		}
-		
-		json_t* json_benchmark;
-		if ( meta && ( json_benchmark = json_object_get(meta, "benchmark file") ) )
-                {
-		    if(json_is_string(json_benchmark))
-		    {
-			std::string s(json_string_value(json_benchmark));
-			writeSteps = 101;
-			csvFile.open(s);
-			std::cout << "Benchmark start filename: " << s << std::endl;
-			csvFile << "Frame,";
-			for(int i = 0; i < numProc; i++)
-			{
-			    csvFile << "GPU " << i << "-kernel,";
-			}
-			csvFile << "min-kernel, " << "max-kernel, " << "average-kernel" << ",,";
-			for(int i = 0; i < numProc; i++)
-			{
-			    csvFile << "GPU " << i << "-all,";
-			}
-			csvFile << "min-all, " << "max-all, " << "average-all" << "\n";
-			
-		    }
-		    else
-		    {
-			std::cerr << "json error: benchmark file must be of type string!" << std::endl;
-		    }
-		}
-		json_t* json_rotationBenchmark;
-		if ( meta && ( json_rotationBenchmark = json_object_get(meta, "benchmark rotation") ) )
-                {
-		    if(json_is_string(json_rotationBenchmark))
-		    {
-			std::string s(json_string_value(json_rotationBenchmark));
-			rotationSteps = 1081;
-			csvFile.open(s);
-			std::cout << "Benchmark start filename: " << s << std::endl;
-			csvFile << "Timestep,";
-			csvFile << "min-kernel, " << "max-kernel, " << "average-kernel" << ",,";
-			csvFile << "min-all, " << "max-all, " << "average-all" << "\n";
-			
-		    }
-		    else
-		    {
-			std::cerr << "json error: benchmark file must be of type string!" << std::endl;
-		    }
-		}
+                        int time = visualization->kernel_time;
+                    if (rank == 0)
+                    {
+                    
+                        int min = std::numeric_limits<int>::max();
+                        int max = std::numeric_limits<int>::min();
+                        int average = 0;
+                        int times[numProc];
+                        MPI_Gather(&time, 1, MPI_INT, times, 1, MPI_INT, 0, mpi_world);
+                        int smallRotationSteps = 1080 - rotationSteps;
+                        json_t * feedback = json_object();
+                        json_t *array = json_array();
+                        if(smallRotationSteps < 360){
+                            json_array_append(array, json_real(1.0));
+                            json_array_append(array, json_real(0.0));
+                            json_array_append(array, json_real(0.0));
+                        }
+                        else if(smallRotationSteps < 720){
+                            json_array_append(array, json_real(0.0));
+                            json_array_append(array, json_real(1.0));
+                            json_array_append(array, json_real(0.0));
+                        }
+                        else {
+                            json_array_append(array, json_real(0.0));
+                            json_array_append(array, json_real(0.0));
+                            json_array_append(array, json_real(1.0));
+                        }
+                        json_array_append(array, json_real(double(1.0)));
+                        json_object_set_new(feedback, "rotation axis", array);
+                        visualization->getCommunicator()->setMessage( feedback );
+                        csvFile << smallRotationSteps << ",";
+                        for(int i = 0; i < numProc; i++)
+                        {
+                            min = (times[i] < min) ? times[i] : min;
+                            max = (times[i] > max) ? times[i] : max;
+                            average += times[i];
+                        }
+                        average /= numProc;
+                        csvFile << min/1000.0 << "," << max/1000.0 << "," << average/1000.0 << ",,";
+                        
+                        min = std::numeric_limits<int>::max();
+                        max = std::numeric_limits<int>::min();
+                        average = 0;
+                        int total_times[numProc];
+                        MPI_Gather(&drawing_time, 1, MPI_INT, total_times, 1, MPI_INT, 0, mpi_world);
+                        for(int i = 0; i < numProc; i++)
+                        {
+                            min = (total_times[i] < min) ? total_times[i] : min;
+                            max = (total_times[i] > max) ? total_times[i] : max;
+                            average += total_times[i];
+                        }
+                        
+                        average /= numProc;
+                        csvFile << min/1000.0 << "," << max/1000.0 << "," << average/1000.0 << "\n";
+                    }
+                    else{
+                        MPI_Gather(&time, 1, MPI_INT, NULL, 0, MPI_INT, 0, mpi_world);
+                        MPI_Gather(&drawing_time, 1, MPI_INT, NULL, 0, MPI_INT, 0, mpi_world);
+                    }
+                    
+                    if(rotationSteps == 1)
+                        csvFile.close();
+                    }
+                    rotationSteps--;
+                }
+                
+                json_t* json_benchmark;
+                if ( meta && ( json_benchmark = json_object_get(meta, "benchmark file") ) )
+                        {
+                    if(json_is_string(json_benchmark))
+                    {
+                        std::string s(json_string_value(json_benchmark));
+                        writeSteps = 101;
+                        csvFile.open(s);
+                        std::cout << "Benchmark start filename: " << s << std::endl;
+                        csvFile << "Frame,";
+                    for(int i = 0; i < numProc; i++)
+                    {
+                        csvFile << "GPU " << i << "-kernel,";
+                    }
+                    csvFile << "min-kernel, " << "max-kernel, " << "average-kernel" << ",,";
+                    for(int i = 0; i < numProc; i++)
+                    {
+                        csvFile << "GPU " << i << "-all,";
+                    }
+                    csvFile << "min-all, " << "max-all, " << "average-all" << "\n";
+                    
+                    }
+                    else
+                    {
+                        std::cerr << "json error: benchmark file must be of type string!" << std::endl;
+                    }
+                }
+                json_t* json_rotationBenchmark;
+                if ( meta && ( json_rotationBenchmark = json_object_get(meta, "benchmark rotation") ) )
+                        {
+                    if(json_is_string(json_rotationBenchmark))
+                    {
+                        std::string s(json_string_value(json_rotationBenchmark));
+                        rotationSteps = 1081;
+                        csvFile.open(s);
+                        std::cout << "Benchmark start filename: " << s << std::endl;
+                        csvFile << "Timestep,";
+                        csvFile << "min-kernel, " << "max-kernel, " << "average-kernel" << ",,";
+                        csvFile << "min-all, " << "max-all, " << "average-all" << "\n";
+                        
+                    }
+                    else
+                    {
+                        std::cerr << "json error: benchmark file must be of type string!" << std::endl;
+                    }
+                }
                 json_t* json_pause = nullptr;
                 if ( meta && (json_pause = json_object_get(meta, "pause")) && json_boolean_value( json_pause ) )
                     pause = !pause;
@@ -752,11 +751,11 @@ private:
             };
 
             isaac_for_each_params( sources, SourceInitIterator(), cellDescription, movingWindow );
-	    isaac_for_each_params( particleSources, ParticleSourceInitIterator(), movingWindow);
-	    //particleSources = ParticleList(pSource1);
-	    isaac_for_each_params( particleSources, ParticleSourceNameIterator());
-	    
-	    
+            isaac_for_each_params( particleSources, ParticleSourceInitIterator(), movingWindow);
+            //particleSources = ParticleList(pSource1);
+            isaac_for_each_params( particleSources, ParticleSourceNameIterator());
+            
+            
             visualization = new VisualizationType (
                 cupla::manager::Device< cupla::AccHost >::get().current( ),
                 cupla::manager::Device< cupla::AccDev >::get().current( ),
@@ -768,18 +767,18 @@ private:
                 framebuffer_size,
                 MovingWindow::getInstance().getWindow( 0 ).globalDimensions.size,
                 subGrid.getLocalDomain().size,
-		subGrid.getLocalDomain().size / SuperCellSize::toRT(),
+                subGrid.getLocalDomain().size / SuperCellSize::toRT(),
                 subGrid.getLocalDomain().offset,
-		particleSources,   
+                particleSources,   
                 sources,
                 cellSizeFactor
             );
-	    
-	    std::cout << "GlobalDomain: " << subGrid.getGlobalDomain().size[0] << "; " << subGrid.getGlobalDomain().size[1] << "; " << subGrid.getGlobalDomain().size[2] <<  std::endl;
-	    std::cout << "LocalDomain: " << subGrid.getLocalDomain().size[0] << "; " << subGrid.getLocalDomain().size[1] << "; " << subGrid.getLocalDomain().size[2] <<  std::endl;
-	    std::cout << "Offset: " << subGrid.getLocalDomain().offset[0] << "; " << subGrid.getLocalDomain().offset[1] << "; " << subGrid.getLocalDomain().offset[2] <<  std::endl;
-	    std::cout << "CellSizeFactor: " << cellSizeFactor[0] << "; " << cellSizeFactor[1] << "; " << cellSizeFactor[2] <<  std::endl;
-	    std::cout << "SuperCellSize: " << SuperCellSize::toRT()[0] << "; " << SuperCellSize::toRT()[1] << "; " << SuperCellSize::toRT()[2] <<  std::endl;
+            
+            std::cout << "GlobalDomain: " << subGrid.getGlobalDomain().size[0] << "; " << subGrid.getGlobalDomain().size[1] << "; " << subGrid.getGlobalDomain().size[2] <<  std::endl;
+            std::cout << "LocalDomain: " << subGrid.getLocalDomain().size[0] << "; " << subGrid.getLocalDomain().size[1] << "; " << subGrid.getLocalDomain().size[2] <<  std::endl;
+            std::cout << "Offset: " << subGrid.getLocalDomain().offset[0] << "; " << subGrid.getLocalDomain().offset[1] << "; " << subGrid.getLocalDomain().offset[2] <<  std::endl;
+            std::cout << "CellSizeFactor: " << cellSizeFactor[0] << "; " << cellSizeFactor[1] << "; " << cellSizeFactor[2] <<  std::endl;
+            std::cout << "SuperCellSize: " << SuperCellSize::toRT()[0] << "; " << SuperCellSize::toRT()[1] << "; " << SuperCellSize::toRT()[2] <<  std::endl;
             visualization->setJpegQuality(jpeg_quality);
             //Defining the later periodicly sent meta data
             if (rank == 0)
