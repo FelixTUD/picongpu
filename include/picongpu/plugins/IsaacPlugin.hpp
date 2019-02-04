@@ -74,27 +74,30 @@ class TFieldSource
 
         void update(bool enabled, void* pointer)
         {
-            const SubGrid<simDim>& subGrid = Environment< simDim >::get().SubGrid();
-            DataConnector &dc = Environment< simDim >::get().DataConnector();
-            auto pField = dc.get< FieldType >( FieldType::getName(), true );
-            DataSpace< simDim > guarding = SuperCellSize::toRT() * cellDescription->getGuardingSuperCells();
-            if (movingWindow)
+            if(enabled)
             {
-                GridController<simDim> &gc = Environment<simDim>::get().GridController();
-                if (gc.getPosition()[1] == 0) //first gpu
+                const SubGrid<simDim>& subGrid = Environment< simDim >::get().SubGrid();
+                DataConnector &dc = Environment< simDim >::get().DataConnector();
+                auto pField = dc.get< FieldType >( FieldType::getName(), true );
+                DataSpace< simDim > guarding = SuperCellSize::toRT() * cellDescription->getGuardingSuperCells();
+                if (movingWindow)
                 {
-                    uint32_t* currentStep = (uint32_t*)pointer;
-                    Window window( MovingWindow::getInstance().getWindow( *currentStep ) );
-                    guarding += subGrid.getLocalDomain().size - window.localDimensions.size;
+                    GridController<simDim> &gc = Environment<simDim>::get().GridController();
+                    if (gc.getPosition()[1] == 0) //first gpu
+                    {
+                        uint32_t* currentStep = (uint32_t*)pointer;
+                        Window window( MovingWindow::getInstance().getWindow( *currentStep ) );
+                        guarding += subGrid.getLocalDomain().size - window.localDimensions.size;
+                    }
                 }
+                typename FieldType::DataBoxType dataBox = pField->getDeviceDataBox();
+                shifted = dataBox.shift( guarding );
+                dc.releaseData( FieldType::getName() );
+                /* avoid deadlock between not finished pmacc tasks and potential blocking operations
+                * within ISAAC
+                */
+                __getTransactionEvent().waitForFinished();
             }
-            typename FieldType::DataBoxType dataBox = pField->getDeviceDataBox();
-            shifted = dataBox.shift( guarding );
-            dc.releaseData( FieldType::getName() );
-            /* avoid deadlock between not finished pmacc tasks and potential blocking operations
-             * within ISAAC
-             */
-            __getTransactionEvent().waitForFinished();
 
         }
 
@@ -223,7 +226,7 @@ public:
     auto const particle = frame[ i ];
     
     // storage number in the actual frame
-    const auto frameCellNr = particle[localCellIdx_];
+    const auto frameCellNr = particle[ localCellIdx_];
 
     // offset in the actual superCell = cell offset in the supercell
     const DataSpace<simDim> frameCellOffset(DataSpaceOperations<simDim>::template map<MappingDesc::SuperCellSize > (frameCellNr));
@@ -304,7 +307,7 @@ public:
     {
         // update movingWindow cells
         if (enabled)
-    {
+        {
             uint32_t* currentStep = (uint32_t*)pointer;
             DataConnector &dc = Environment<>::get().DataConnector();
             //constexpr uint32_t maxParticlesPerFrame = pmacc::math::CT::volume< SuperCellSize >::type::value;
@@ -320,9 +323,10 @@ public:
                 {
                     Window window(MovingWindow::getInstance().getWindow( *currentStep ));
                     for(uint i = 0; i < simDim; i++)
-                        guarding[i] += int((subGrid.getLocalDomain().size[i] - window.localDimensions.size[i]) / (float)MappingDesc::SuperCellSize::toRT()[i]);
+                        guarding[i] += int(math::ceil((subGrid.getLocalDomain().size[i] - window.localDimensions.size[i]) / (float)MappingDesc::SuperCellSize::toRT()[i]));
                 }
             }
+            dc.releaseData( ParticlesType::FrameType::getName() );
         }
     }
     
@@ -394,7 +398,7 @@ public:
     static const size_t textureDim = 1024;
     using SourceList = bmpl::transform<boost::fusion::result_of::as_list< Fields_Seq >::type,Transformoperator<bmpl::_1>>::type;
     // create compile time particle list
-    using ParticleList = bmpl::transform<boost::fusion::result_of::as_list< VectorAllSpecies >::type,ParticleTransformoperator<bmpl::_1>>::type;
+    using ParticleList = bmpl::transform<boost::fusion::result_of::as_list< Particle_Seq >::type,ParticleTransformoperator<bmpl::_1>>::type;
     using VisualizationType = IsaacVisualization
     <
         cupla::AccHost,
@@ -448,8 +452,8 @@ public:
         {
             step = 0;
             bool pause = false;
-            int writeSteps = 0;
-            int rotationSteps = 0;
+            //int writeSteps = 0;
+            //int rotationSteps = 0;
             std::ofstream csvFile;
             do
             {
@@ -473,11 +477,44 @@ public:
                 }
 
                 uint64_t start = visualization->getTicksUs();
-                //json_t* meta = visualization->doVisualization(META_MASTER, &currentStep, !pause);
-                visualization->kernel_time = 0;
-                json_t* meta = visualization->doVisualization(META_MASTER, &currentStep, (!pause || writeSteps > 0 || rotationSteps > 0));
-                drawing_time = visualization->getTicksUs() - start;
 
+                visualization->kernel_time = 0;
+				json_t* meta = visualization->doVisualization(META_MASTER, &currentStep, !pause);
+                //json_t* meta = visualization->doVisualization(META_MASTER, &currentStep, (!pause || writeSteps > 0 || rotationSteps > 0));
+                drawing_time = visualization->getTicksUs() - start;
+				
+                if (rank == 0)
+                {
+                    if ( autopilot != 0.0 )
+                    {
+
+                        json_t * feedback = json_object();
+                        json_t *array = json_array();
+                        json_array_append(array, json_real(0.0));
+                        json_array_append(array, json_real(1.0));
+                        json_array_append(array, json_real(0.0));
+                        json_array_append(array, json_real(autopilot * (double) drawing_time / 1000000.0));
+
+                        json_object_set_new(feedback, "rotation axis", array);
+                        visualization->getCommunicator()->setMessage( feedback );
+
+                    }
+                }
+
+                json_t* json_autopilot;
+                if ( meta && ( json_autopilot = json_object_get(meta, "autopilot") ) )
+                {
+                    if(json_is_real(json_autopilot))
+                    {
+                        double b(json_real_value(json_autopilot));
+                        autopilot = b;
+                    }
+                    else
+                    {
+                        std::cerr << "json error: autopilot needs a double speed!" << std::endl;
+                    }
+                }
+                /*
                 if(writeSteps > 0)
                 {
                     if (writeSteps <= 100)
@@ -645,6 +682,7 @@ public:
                         std::cerr << "json error: benchmark file must be of type string!" << std::endl;
                     }
                 }
+                */
                 json_t* json_pause = nullptr;
                 if ( meta && (json_pause = json_object_get(meta, "pause")) && json_boolean_value( json_pause ) )
                     pause = !pause;
@@ -714,7 +752,7 @@ private:
     int numProc;
     MPI_Comm mpi_world;
     bool movingWindow;
-    //ParticleSource1 pSource1;
+	double autopilot = 0.0;
     ParticleList particleSources;
     SourceList sources;
     /** render interval within the notify period
