@@ -206,7 +206,7 @@ public:
       frameSize(frameSize),
       i(0)
       {
-	
+    
       }
   
   ISAAC_HOST_DEVICE_INLINE void next()
@@ -359,7 +359,7 @@ struct ParticleSourceNameIterator
     template<typename TSource>
     ISAAC_HOST_INLINE  void operator()( const int I,const TSource& s) const
     {
-	std::cout << "Particle Source: " << I << ", Name: " << s.getName() << std::endl;
+    std::cout << "Particle Source: " << I << ", Name: " << s.getName() << std::endl;
     }
 };
 
@@ -406,7 +406,7 @@ public:
         cupla::AccStream,
         cupla::KernelDim,
         SimDim,
-	ParticleList,
+    ParticleList,
         SourceList,
         DataSpace< simDim >,
         textureDim,
@@ -479,10 +479,10 @@ public:
                 uint64_t start = visualization->getTicksUs();
 
                 visualization->kernel_time = 0;
-				json_t* meta = visualization->doVisualization(META_MASTER, &currentStep, !pause);
+                json_t* meta = visualization->doVisualization(META_MASTER, &currentStep, !pause);
                 //json_t* meta = visualization->doVisualization(META_MASTER, &currentStep, (!pause || writeSteps > 0 || rotationSteps > 0));
                 drawing_time = visualization->getTicksUs() - start;
-				
+                
                 if (rank == 0)
                 {
                     if ( autopilot != 0.0 )
@@ -752,7 +752,7 @@ private:
     int numProc;
     MPI_Comm mpi_world;
     bool movingWindow;
-	double autopilot = 0.0;
+    double autopilot = 0.0;
     ParticleList particleSources;
     SourceList sources;
     /** render interval within the notify period
@@ -772,7 +772,7 @@ private:
     {
         if(!notifyPeriod.empty())
         {
-	    MPI_Comm_dup(MPI_COMM_WORLD, &mpi_world);
+        MPI_Comm_dup(MPI_COMM_WORLD, &mpi_world);
             MPI_Comm_rank(mpi_world, &rank);
             MPI_Comm_size(mpi_world, &numProc);
             if ( MovingWindow::getInstance().isSlidingWindowActive() )

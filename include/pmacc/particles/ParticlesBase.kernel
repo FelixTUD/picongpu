@@ -238,13 +238,13 @@ struct KernelFillGapsLastFrame
                     );
                 }
                 else
-		{
+                {
                     getPreviousFrameAndRemoveLastFrame(
                         lastFrame,
                         pb,
                         superCellIdx
                     );
-		}
+                }
             }
         );
     }
